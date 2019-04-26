@@ -24,7 +24,6 @@
  * IN THE SOFTWARE.
  */
 
-#include <assert.h>
 #include <stdio.h>
 #include "picohttpparser.h"
 
@@ -44,6 +43,21 @@
     "__utmz=xxxxxxxxx.xxxxxxxxxx.x.x.utmccn=(referral)|utmcsr=reader.livedoor.com|utmcct=/reader/|utmcmd=referral\r\n"             \
     "\r\n"
 
+#ifdef DEBUG
+#define LOOP_COUNT  1
+#else
+#define LOOP_COUNT  10000000
+#endif
+
+static void printHeaders(const struct phr_header* hdrs, int cnt)
+{
+    int i;
+    for(i=0; i<cnt; i++) {
+        printf("%.*s: %.*s\n", hdrs[i].name_len, hdrs[i].name,
+            hdrs[i].value_len, hdrs[i].value);
+    }
+}
+
 int main(void)
 {
     const char *method;
@@ -55,11 +69,14 @@ int main(void)
     size_t num_headers;
     int i, ret;
 
-    for (i = 0; i < 10000000; i++) {
-        num_headers = sizeof(headers) / sizeof(headers[0]);
-        ret = phr_parse_request(REQ, sizeof(REQ) - 1, &method, &method_len, &path, &path_len, &minor_version, headers, &num_headers,
-                                0);
-        assert(ret == sizeof(REQ) - 1);
+    num_headers = sizeof(headers) / sizeof(headers[0]);
+
+    for (i = 0; i < LOOP_COUNT; i++) {
+        ret = phr_parse_request(REQ, sizeof(REQ) - 1, &method, &method_len, &path, &path_len, 
+                &minor_version, headers, &num_headers, 0);
+#ifdef DEBUG
+        printHeaders(headers, num_headers);
+#endif
     }
 
     return 0;
