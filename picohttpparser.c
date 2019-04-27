@@ -54,57 +54,59 @@
 
 #define IS_PRINTABLE_ASCII(c) ((unsigned char)(c)-040u < 0137u)
 
-#define CHECK_EOF()                                                                                                                \
-    if (buf == buf_end) {                                                                                                          \
-        *ret = -2;                                                                                                                 \
-        return NULL;                                                                                                               \
+#define CHECK_EOF()                                                                                \
+    if (buf == buf_end) {                                                                          \
+        *ret = -2;                                                                                 \
+        return NULL;                                                                               \
     }
 
-#define EXPECT_CHAR_NO_CHECK(ch)                                                                                                   \
-    if (*buf++ != ch) {                                                                                                            \
-        *ret = -1;                                                                                                                 \
-        return NULL;                                                                                                               \
+#define EXPECT_CHAR_NO_CHECK(ch)                                                                   \
+    if (*buf++ != ch) {                                                                            \
+        *ret = -1;                                                                                 \
+        return NULL;                                                                               \
     }
 
-#define EXPECT_CHAR(ch)                                                                                                            \
-    CHECK_EOF();                                                                                                                   \
+#define EXPECT_CHAR(ch)                                                                            \
+    CHECK_EOF();                                                                                   \
     EXPECT_CHAR_NO_CHECK(ch);
 
-#define ADVANCE_TOKEN(tok, toklen)                                                                                                 \
-    do {                                                                                                                           \
-        const char *tok_start = buf;                                                                                               \
-        static const char ALIGNED(16) ranges2[] = "\000\040\177\177";                                                              \
-        int found2;                                                                                                                \
-        buf = findchar_fast(buf, buf_end, ranges2, sizeof(ranges2) - 1, &found2);                                                  \
-        if (!found2) {                                                                                                             \
-            CHECK_EOF();                                                                                                           \
-        }                                                                                                                          \
-        while (1) {                                                                                                                \
-            if (*buf == ' ') {                                                                                                     \
-                break;                                                                                                             \
-            } else if (unlikely(!IS_PRINTABLE_ASCII(*buf))) {                                                                      \
-                if ((unsigned char)*buf < '\040' || *buf == '\177') {                                                              \
-                    *ret = -1;                                                                                                     \
-                    return NULL;                                                                                                   \
-                }                                                                                                                  \
-            }                                                                                                                      \
-            ++buf;                                                                                                                 \
-            CHECK_EOF();                                                                                                           \
-        }                                                                                                                          \
-        tok = tok_start;                                                                                                           \
-        toklen = buf - tok_start;                                                                                                  \
+#define ADVANCE_TOKEN(tok, toklen)                                                                 \
+    do {                                                                                           \
+        const char *tok_start = buf;                                                               \
+        static const char ALIGNED(16) ranges2[] = "\000\040\177\177";                              \
+        int found2;                                                                                \
+        buf = findchar_fast(buf, buf_end, ranges2, sizeof(ranges2) - 1, &found2);                  \
+        if (!found2) {                                                                             \
+            CHECK_EOF();                                                                           \
+        }                                                                                          \
+        while (1) {                                                                                \
+            if (*buf == ' ') {                                                                     \
+                break;                                                                             \
+            } else if (unlikely(!IS_PRINTABLE_ASCII(*buf))) {                                      \
+                if ((unsigned char)*buf < '\040' || *buf == '\177') {                              \
+                    *ret = -1;                                                                     \
+                    return NULL;                                                                   \
+                }                                                                                  \
+            }                                                                                      \
+            ++buf;                                                                                 \
+            CHECK_EOF();                                                                           \
+        }                                                                                          \
+        tok = tok_start;                                                                           \
+        toklen = buf - tok_start;                                                                  \
     } while (0)
 
-static const char *token_char_map = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                                    "\0\1\0\1\1\1\1\1\0\0\1\1\0\1\1\0\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\0"
-                                    "\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\1\1"
-                                    "\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\1\0\1\0"
-                                    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                                    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                                    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                                    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+static const char *token_char_map =
+    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+    "\0\1\0\1\1\1\1\1\0\0\1\1\0\1\1\0\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\0"
+    "\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\1\1"
+    "\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\1\0\1\0"
+    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 
-static const char *findchar_fast(const char *buf, const char *buf_end, const char *ranges, size_t ranges_size, int *found)
+static const char *findchar_fast(const char *buf, const char *buf_end, const char *ranges,
+                                 size_t ranges_size, int *found)
 {
     *found = 0;
 #if __SSE4_2__
@@ -114,7 +116,8 @@ static const char *findchar_fast(const char *buf, const char *buf_end, const cha
         size_t left = (buf_end - buf) & ~15;
         do {
             __m128i b16 = _mm_loadu_si128((const __m128i *)buf);
-            int r = _mm_cmpestri(ranges16, ranges_size, b16, 16, _SIDD_LEAST_SIGNIFICANT | _SIDD_CMP_RANGES | _SIDD_UBYTE_OPS);
+            int r = _mm_cmpestri(ranges16, ranges_size, b16, 16,
+                                 _SIDD_LEAST_SIGNIFICANT | _SIDD_CMP_RANGES | _SIDD_UBYTE_OPS);
             if (unlikely(r != 16)) {
                 buf += r;
                 *found = 1;
@@ -133,7 +136,8 @@ static const char *findchar_fast(const char *buf, const char *buf_end, const cha
     return buf;
 }
 
-static const char *get_token_to_eol(const char *buf, const char *buf_end, const char **token, size_t *token_len, int *ret)
+static const char *get_token_to_eol(const char *buf, const char *buf_end, const char **token,
+                                    size_t *token_len, int *ret)
 {
     const char *token_start = buf;
 
@@ -150,13 +154,14 @@ static const char *get_token_to_eol(const char *buf, const char *buf_end, const 
     if (found)
         goto FOUND_CTL;
 #else
-    /* find non-printable char within the next 8 bytes, this is the hottest code; manually inlined */
+    /* find non-printable char within the next 8 bytes, this is the hottest code; manually inlined
+     */
     while (likely(buf_end - buf >= 8)) {
-#define DOIT()                                                                                                                     \
-    do {                                                                                                                           \
-        if (unlikely(!IS_PRINTABLE_ASCII(*buf)))                                                                                   \
-            goto NonPrintable;                                                                                                     \
-        ++buf;                                                                                                                     \
+#define DOIT()                                                                                     \
+    do {                                                                                           \
+        if (unlikely(!IS_PRINTABLE_ASCII(*buf)))                                                   \
+            goto NonPrintable;                                                                     \
+        ++buf;                                                                                     \
     } while (0)
         DOIT();
         DOIT();
@@ -169,7 +174,8 @@ static const char *get_token_to_eol(const char *buf, const char *buf_end, const 
 #undef DOIT
         continue;
     NonPrintable:
-        if ((likely((unsigned char)*buf < '\040') && likely(*buf != '\011')) || unlikely(*buf == '\177')) {
+        if ((likely((unsigned char)*buf < '\040') && likely(*buf != '\011')) ||
+            unlikely(*buf == '\177')) {
             goto FOUND_CTL;
         }
         ++buf;
@@ -178,7 +184,8 @@ static const char *get_token_to_eol(const char *buf, const char *buf_end, const 
     for (;; ++buf) {
         CHECK_EOF();
         if (unlikely(!IS_PRINTABLE_ASCII(*buf))) {
-            if ((likely((unsigned char)*buf < '\040') && likely(*buf != '\011')) || unlikely(*buf == '\177')) {
+            if ((likely((unsigned char)*buf < '\040') && likely(*buf != '\011')) ||
+                unlikely(*buf == '\177')) {
                 goto FOUND_CTL;
             }
         }
@@ -228,27 +235,28 @@ static const char *is_complete(const char *buf, const char *buf_end, size_t last
     return NULL;
 }
 
-#define PARSE_INT(valp_, mul_)                                                                                                     \
-    if (*buf < '0' || '9' < *buf) {                                                                                                \
-        buf++;                                                                                                                     \
-        *ret = -1;                                                                                                                 \
-        return NULL;                                                                                                               \
-    }                                                                                                                              \
+#define PARSE_INT(valp_, mul_)                                                                     \
+    if (*buf < '0' || '9' < *buf) {                                                                \
+        buf++;                                                                                     \
+        *ret = -1;                                                                                 \
+        return NULL;                                                                               \
+    }                                                                                              \
     *(valp_) = (mul_) * (*buf++ - '0');
 
-#define PARSE_INT_3(valp_)                                                                                                         \
-    do {                                                                                                                           \
-        int res_ = 0;                                                                                                              \
-        PARSE_INT(&res_, 100)                                                                                                      \
-        *valp_ = res_;                                                                                                             \
-        PARSE_INT(&res_, 10)                                                                                                       \
-        *valp_ += res_;                                                                                                            \
-        PARSE_INT(&res_, 1)                                                                                                        \
-        *valp_ += res_;                                                                                                            \
+#define PARSE_INT_3(valp_)                                                                         \
+    do {                                                                                           \
+        int res_ = 0;                                                                              \
+        PARSE_INT(&res_, 100)                                                                      \
+        *valp_ = res_;                                                                             \
+        PARSE_INT(&res_, 10)                                                                       \
+        *valp_ += res_;                                                                            \
+        PARSE_INT(&res_, 1)                                                                        \
+        *valp_ += res_;                                                                            \
     } while (0)
 
 /* returned pointer is always within [buf, buf_end), or null */
-static const char *parse_http_version(const char *buf, const char *buf_end, int *minor_version, int *ret)
+static const char *parse_http_version(const char *buf, const char *buf_end, int *minor_version,
+                                      int *ret)
 {
     /* we want at least [HTTP/1.<two chars>] to try to parse */
     if (buf_end - buf < 9) {
@@ -266,8 +274,8 @@ static const char *parse_http_version(const char *buf, const char *buf_end, int 
     return buf;
 }
 
-static const char *parse_headers(const char *buf, const char *buf_end, struct phr_header *headers, size_t *num_headers,
-                                 size_t max_headers, int *ret)
+static const char *parse_headers(const char *buf, const char *buf_end, struct phr_header *headers,
+                                 size_t *num_headers, size_t max_headers, int *ret)
 {
     for (;; ++*num_headers) {
         CHECK_EOF();
@@ -344,9 +352,10 @@ static const char *parse_headers(const char *buf, const char *buf_end, struct ph
     return buf;
 }
 
-static const char *parse_request(const char *buf, const char *buf_end, const char **method, size_t *method_len, const char **path,
-                                 size_t *path_len, int *minor_version, struct phr_header *headers, size_t *num_headers,
-                                 size_t max_headers, int *ret)
+static const char *parse_request(const char *buf, const char *buf_end, const char **method,
+                                 size_t *method_len, const char **path, size_t *path_len,
+                                 int *minor_version, struct phr_header *headers,
+                                 size_t *num_headers, size_t max_headers, int *ret)
 {
     /* skip first empty line (some clients add CRLF after POST content) */
     CHECK_EOF();
@@ -382,8 +391,9 @@ static const char *parse_request(const char *buf, const char *buf_end, const cha
     return parse_headers(buf, buf_end, headers, num_headers, max_headers, ret);
 }
 
-int phr_parse_request(const char *buf_start, size_t len, const char **method, size_t *method_len, const char **path,
-                      size_t *path_len, int *minor_version, struct phr_header *headers, size_t *num_headers, size_t last_len)
+int phr_parse_request(const char *buf_start, size_t len, const char **method, size_t *method_len,
+                      const char **path, size_t *path_len, int *minor_version,
+                      struct phr_header *headers, size_t *num_headers, size_t last_len)
 {
     const char *buf = buf_start, *buf_end = buf_start + len;
     size_t max_headers = *num_headers;
@@ -402,16 +412,18 @@ int phr_parse_request(const char *buf_start, size_t len, const char **method, si
         return r;
     }
 
-    if ((buf = parse_request(buf, buf_end, method, method_len, path, path_len, minor_version, headers, num_headers, max_headers,
-                             &r)) == NULL) {
+    if ((buf = parse_request(buf, buf_end, method, method_len, path, path_len, minor_version,
+                             headers, num_headers, max_headers, &r)) == NULL) {
         return r;
     }
 
     return (int)(buf - buf_start);
 }
 
-static const char *parse_response(const char *buf, const char *buf_end, int *minor_version, int *status, const char **msg,
-                                  size_t *msg_len, struct phr_header *headers, size_t *num_headers, size_t max_headers, int *ret)
+static const char *parse_response(const char *buf, const char *buf_end, int *minor_version,
+                                  int *status, const char **msg, size_t *msg_len,
+                                  struct phr_header *headers, size_t *num_headers,
+                                  size_t max_headers, int *ret)
 {
     /* parse "HTTP/1.x" */
     if ((buf = parse_http_version(buf, buf_end, minor_version, ret)) == NULL) {
@@ -422,7 +434,8 @@ static const char *parse_response(const char *buf, const char *buf_end, int *min
         *ret = -1;
         return NULL;
     }
-    /* parse status code, we want at least [:digit:][:digit:][:digit:]<other char> to try to parse */
+    /* parse status code, we want at least [:digit:][:digit:][:digit:]<other char> to try to parse
+     */
     if (buf_end - buf < 4) {
         *ret = -2;
         return NULL;
@@ -448,8 +461,9 @@ static const char *parse_response(const char *buf, const char *buf_end, int *min
     return parse_headers(buf, buf_end, headers, num_headers, max_headers, ret);
 }
 
-int phr_parse_response(const char *buf_start, size_t len, int *minor_version, int *status, const char **msg, size_t *msg_len,
-                       struct phr_header *headers, size_t *num_headers, size_t last_len)
+int phr_parse_response(const char *buf_start, size_t len, int *minor_version, int *status,
+                       const char **msg, size_t *msg_len, struct phr_header *headers,
+                       size_t *num_headers, size_t last_len)
 {
     const char *buf = buf_start, *buf_end = buf + len;
     size_t max_headers = *num_headers;
@@ -467,14 +481,16 @@ int phr_parse_response(const char *buf_start, size_t len, int *minor_version, in
         return r;
     }
 
-    if ((buf = parse_response(buf, buf_end, minor_version, status, msg, msg_len, headers, num_headers, max_headers, &r)) == NULL) {
+    if ((buf = parse_response(buf, buf_end, minor_version, status, msg, msg_len, headers,
+                              num_headers, max_headers, &r)) == NULL) {
         return r;
     }
 
     return (int)(buf - buf_start);
 }
 
-int phr_parse_headers(const char *buf_start, size_t len, struct phr_header *headers, size_t *num_headers, size_t last_len)
+int phr_parse_headers(const char *buf_start, size_t len, struct phr_header *headers,
+                      size_t *num_headers, size_t last_len)
 {
     const char *buf = buf_start, *buf_end = buf + len;
     size_t max_headers = *num_headers;
