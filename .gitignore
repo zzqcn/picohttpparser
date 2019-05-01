@@ -1,2 +1,4 @@
 test-bin
+bench
 .vscode/
+bench.dSYM/
