@@ -279,11 +279,11 @@ static const char *parse_headers(const char *buf, const char *buf_end, struct ph
 {
     for (;; ++*num_headers) {
         CHECK_EOF();
-        if (*buf == '\015') {
+        if (*buf == '\r') {
             ++buf;
-            EXPECT_CHAR('\012');
+            EXPECT_CHAR('\n');  // 检查\r后面必须跟\n
             break;
-        } else if (*buf == '\012') {
+        } else if (*buf == '\n') {
             ++buf;
             break;
         }
@@ -294,7 +294,17 @@ static const char *parse_headers(const char *buf, const char *buf_end, struct ph
         if (!(*num_headers != 0 && (*buf == ' ' || *buf == '\t'))) {
             /* parsing name, but do not discard SP before colon, see
              * http://www.mozilla.org/security/announce/2006/mfsa2006-33.html */
+            // 解析字段名时不丢弃冒号前的空白字符
             headers[*num_headers].name = buf;
+            // 16字节的范围数组, 分为8组, 用于后续的快速查找
+            // 1: 0x00-0x20, 控制字符
+            // 2: \", 即0x22, 双引号
+            // 3: \( - \), 即0x28-0x29, 小括号对
+            // 4: \,, 即0x2c, 逗号
+            // 5: \/, 即0x2f, 斜杠
+            // 6: \:-\@, 即0x3a-0x40, 冒号到@号
+            // 7: \[-\], 即0x5b-0x5d, 中括号对
+            // 8: \{-\377, 即0x7b-0xff
             static const char ALIGNED(16) ranges1[] = "\x00 "  /* control chars and up to SP */
                                                       "\"\""   /* 0x22 */
                                                       "()"     /* 0x28,0x29 */
